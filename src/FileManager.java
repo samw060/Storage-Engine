@@ -26,4 +26,16 @@ public class FileManager {
         }
     }
 
+    /** Checks that there are 4096 bytes, then writes this to correct offset. */
+    public void writePage(ByteBuffer bytes, int pageID) throws IOException {
+        if (bytes.remaining() != PAGE_SIZE) {
+            throw new IOException("Buffer is not a full page: " + bytes.remaining() + " bytes");
+        }
+        long position = (long) PAGE_SIZE * pageID;
+        while (bytes.hasRemaining()) {
+            position += channel.write(bytes, position);
+        }
+    }
+
+
 }
