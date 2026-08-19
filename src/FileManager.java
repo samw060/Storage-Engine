@@ -26,7 +26,12 @@ public class FileManager {
         }
     }
 
-    /** Checks that there are 4096 bytes, then writes this to correct offset. */
+    /**
+     * Writes byte buffer to disk at the page ID spot
+     * @param bytes to write to disk.
+     * @param pageID of where to write bytes.
+     * @throws IOException if an I/O error occurs when writing to disk.
+     */
     public void writePage(ByteBuffer bytes, int pageID) throws IOException {
         if (bytes.remaining() != PAGE_SIZE) {
             throw new IOException("Buffer is not a full page: " + bytes.remaining() + " bytes");
@@ -37,5 +42,16 @@ public class FileManager {
         }
     }
 
-
+    /**
+     * Gets the page bytes from disk.
+     * @param pageID which page you want to grab.
+     * @return the page bytes wrapped in a byte buffer.
+     * @throws IOException if an I/O error occurs while reading from the file channel.
+     */
+    public ByteBuffer readPage(int pageID) throws IOException{
+        ByteBuffer bytes = ByteBuffer.wrap(new byte[PAGE_SIZE]);
+        long position = (long) pageID * PAGE_SIZE;
+        channel.read(bytes, position);
+        return bytes;
+    }
 }
