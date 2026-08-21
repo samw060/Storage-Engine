@@ -7,7 +7,7 @@ import java.nio.file.StandardOpenOption;
 
 public class FileManager {
     /** Number of bytes per page. */
-    final int PAGE_SIZE = 4096;
+    final static int PAGE_SIZE = 4096;
 
     /** The java.nio way of writing to files. */
     private final FileChannel channel;
@@ -17,9 +17,9 @@ public class FileManager {
         Path path = Path.of("database.db");
         try {
             if (!Files.exists(path)) {
-                channel = FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+                this.channel = FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
             } else {
-                channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
+                this.channel = FileChannel.open(path, StandardOpenOption.READ, StandardOpenOption.WRITE);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -37,7 +37,7 @@ public class FileManager {
             throw new IOException("Buffer is not a full page: " + bytes.remaining() + " bytes");
         }
         long position = (long) PAGE_SIZE * pageID;
-        int written = channel.write(bytes, position);
+        int written = this.channel.write(bytes, position);
         if (written != PAGE_SIZE){
             throw new IOException("Didn't write correct number of bytes.");
         }
@@ -52,7 +52,7 @@ public class FileManager {
     public ByteBuffer readPage(int pageID, ByteBuffer frame) throws IOException{
         frame.clear();
         long position = (long) pageID * PAGE_SIZE;
-        int bytesRead = channel.read(frame, position);
+        int bytesRead = this.channel.read(frame, position);
         if (bytesRead == -1){
             throw new IOException("Tried to read past the end of the file.");
         }else if (bytesRead != PAGE_SIZE){
