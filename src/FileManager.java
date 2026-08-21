@@ -7,7 +7,7 @@ import java.nio.file.StandardOpenOption;
 
 public class FileManager {
     /** Number of bytes per page. */
-    int PAGE_SIZE = 4096;
+    final int PAGE_SIZE = 4096;
 
     /** The java.nio way of writing to files. */
     private final FileChannel channel;
@@ -37,8 +37,9 @@ public class FileManager {
             throw new IOException("Buffer is not a full page: " + bytes.remaining() + " bytes");
         }
         long position = (long) PAGE_SIZE * pageID;
-        while (bytes.hasRemaining()) {
-            position += channel.write(bytes, position);
+        int written = channel.write(bytes, position);
+        if (written != PAGE_SIZE){
+            throw new IOException("Didn't write correct number of bytes.");
         }
     }
 
@@ -48,10 +49,16 @@ public class FileManager {
      * @return the page bytes wrapped in a byte buffer.
      * @throws IOException if an I/O error occurs while reading from the file channel.
      */
-    public ByteBuffer readPage(int pageID) throws IOException{
-        ByteBuffer bytes = ByteBuffer.wrap(new byte[PAGE_SIZE]);
+    public ByteBuffer readPage(int pageID, ByteBuffer frame) throws IOException{
+        frame.clear();
         long position = (long) pageID * PAGE_SIZE;
-        channel.read(bytes, position);
-        return bytes;
+        int bytesRead = channel.read(frame, position);
+        if (bytesRead == -1){
+            throw new IOException("Tried to read past the end of the file.");
+        }else if (bytesRead != PAGE_SIZE){
+            throw new IOException("Didn't read full page");
+        }
+        frame.flip();
+        return frame;
     }
 }
