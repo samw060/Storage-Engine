@@ -18,6 +18,11 @@ public class Frame {
         return buffer;
     }
 
+    public void writeAt(int offset, ByteBuffer data) {
+        buffer.put(offset, data, 0, data.remaining());
+        isDirty = true;
+    }
+
     public boolean isPinned(){
         return isPinned;
     }
@@ -54,4 +59,5 @@ public class Frame {
         this.pageID = -1;
         this.isDirty = false;
     }
+
 }

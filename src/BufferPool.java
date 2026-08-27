@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -8,8 +9,9 @@ public class BufferPool {
     private FileManager fileManager;
     private Frame[] frames;
     private Map<Integer, Integer> pageTable;
+    /** Holds frames that have never had a page loaded into them, or have been reset() after eviction. */
     private Deque<Integer> freeList;
-    private int POOL_SIZE;
+    private final int POOL_SIZE;
 
     public BufferPool(){
         this.POOL_SIZE = 5;
@@ -24,5 +26,29 @@ public class BufferPool {
         }
     }
 
+    public Frame fetchPage(int pageID) throws IOException {
+        boolean isCached = pageTable.containsKey(pageID);
+        // Is cached (in page table)
+        if (isCached){
+            int frameIndex = pageTable.get(pageID);
+            Frame currentFramePointer = frames[frameIndex];
+            currentFramePointer.pin();
+            return currentFramePointer;
+        }
+        // Cache miss, but free frame available
+        else if (!freeList.isEmpty()){
+            int freeIndex = freeList.pop();
+            Frame currentFramePointer = frames[freeIndex];
+            fileManager.readPage(pageID, currentFramePointer.getBuffer());
+            currentFramePointer.setPageID(pageID);
+            currentFramePointer.pin();
+            pageTable.put(pageID, freeIndex);
+            return currentFramePointer;
+        }
+        // Cache miss, no free frames available (not all pinned)
+    }
 
+    public void unpinFrame(int pageID){
+        frame.unpin();
+    }
 }
